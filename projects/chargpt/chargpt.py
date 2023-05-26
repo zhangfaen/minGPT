@@ -5,6 +5,14 @@ Trains a character-level language model.
 import os
 import sys
 
+# after python 3.3, relative import is not allowed, below lines setup ../../ as one module search path
+# getting the name of the directory where the this file is present.
+current = os.path.dirname(os.path.realpath(__file__))
+# Getting the parent directory name where the current directory is present.
+current = os.path.dirname(os.path.dirname(current))
+# adding the parent directory to the sys.path.
+sys.path.append(current)
+
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
@@ -93,7 +101,7 @@ if __name__ == '__main__':
     set_seed(config.system.seed)
 
     # construct the training dataset
-    text = open('input.txt', 'r').read() # don't worry we won't run out of file handles
+    text = open(os.path.dirname(os.path.realpath(__file__)) + '/input.txt', 'r').read() # don't worry we won't run out of file handles
     train_dataset = CharDataset(config.data, text)
 
     # construct the model
@@ -115,7 +123,7 @@ if __name__ == '__main__':
             model.eval()
             with torch.no_grad():
                 # sample from the model...
-                context = "O God, O God!"
+                context = "请继续补充完整："
                 x = torch.tensor([train_dataset.stoi[s] for s in context], dtype=torch.long)[None,...].to(trainer.device)
                 y = model.generate(x, 500, temperature=1.0, do_sample=True, top_k=10)[0]
                 completion = ''.join([train_dataset.itos[int(i)] for i in y])

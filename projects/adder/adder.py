@@ -1,11 +1,19 @@
 """
 Trains a GPT to add n-digit numbers.
 """
-
 import os
 import sys
-import json
 
+# after python 3.3, relative import is not allowed, below lines setup ../../ as one module search path
+# getting the name of the directory where the this file is present.
+current = os.path.dirname(os.path.realpath(__file__))
+# Getting the parent directory name where the current directory is present.
+current = os.path.dirname(os.path.dirname(current))
+# adding the parent directory to the sys.path.
+sys.path.append(current)
+ 
+# importing
+import json
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
@@ -68,7 +76,7 @@ class AdditionDataset(Dataset):
     @staticmethod
     def get_default_config():
         C = CN()
-        C.ndigit = 2
+        C.ndigit = 3
         return C
 
     def __init__(self, config, split):
@@ -84,7 +92,7 @@ class AdditionDataset(Dataset):
         perm = torch.randperm(num, generator=rng)
         num_test = min(int(num*0.2), 500) # 20% of the whole dataset, or only up to 500
         self.ixes = perm[:num_test] if split == 'test' else perm[num_test:]
-
+    
     def get_vocab_size(self):
         return 10 # digits 0..9
 
@@ -125,7 +133,7 @@ if __name__ == '__main__':
     # get default config and overrides from the command line, if any
     config = get_config()
     config.merge_from_args(sys.argv[1:])
-    print(config)
+    
     setup_logging(config)
     set_seed(config.system.seed)
 
@@ -136,6 +144,7 @@ if __name__ == '__main__':
     # construct the model
     config.model.vocab_size = train_dataset.get_vocab_size()
     config.model.block_size = train_dataset.get_block_size()
+    print(config)
     model = GPT(config.model)
 
     # construct the trainer object
